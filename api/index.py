@@ -3,7 +3,7 @@ import base64
 import requests
 from io import BytesIO
 from PIL import Image
-from flask import Flask, request, jsonify, send_from_directory # 1. 导入 send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -14,14 +14,18 @@ from google.api_core import exceptions as google_exceptions
 # --- 初始化和配置 ---
 load_dotenv()
 
-# 2. 修改 Flask 初始化，告诉它前端文件在哪里
-app = Flask(__name__, static_folder='.', static_url_path='')
+# Vercel部署需要将静态文件目录指向上一级的'static'文件夹
+app = Flask(__name__, static_folder='../static', static_url_path='')
 CORS(app)
 
-# --- 模型处理函数 (这部分无变化) ---
+# --- 根路由，用于服务前端HTML文件 ---
+@app.route('/')
+def serve_index():
+    return send_from_directory(app.static_folder, 'index.html')
+
+# --- 模型处理函数 ---
 def _process_with_gemini(api_key, prompt, image_bytes):
     """使用Gemini模型处理图像（图生图）"""
-    # ... (代码未变)
     genai.configure(api_key=api_key)
     image = Image.open(BytesIO(image_bytes)) 
     model = genai.GenerativeModel('gemini-2.5-flash-image-preview')
@@ -40,8 +44,9 @@ def _process_with_gemini(api_key, prompt, image_bytes):
     return generated_part.inline_data.data
 
 def _process_with_ark(api_key, prompt, image_bytes=None):
-    """该函数统一了文生图和图生图的调用。"""
-    # ... (代码未变)
+    """
+    该函数统一了文生图 (text-to-image) 和图生图 (image-to-image) 的调用。
+    """
     print("正在调用最新的火山方舟API (doubao-seedream-4.0)...")
     
     url = "https://ark.cn-beijing.volces.com/api/v3/images/generations"
@@ -92,17 +97,11 @@ def _process_with_ark(api_key, prompt, image_bytes=None):
     
     return image_response.content
 
-# --- 3. 新增路由：用于提供前端页面 ---
-@app.route('/')
-def serve_index():
-    """当用户访问根URL时，发送 index.html 文件。"""
-    return send_from_directory('.', 'index.html')
 
-# --- API路由 (这部分无变化) ---
+# --- API路由 ---
 @app.route('/api/generate', methods=['POST'])
 def generate_image_proxy():
     """统一的API端点，根据前端请求分发任务"""
-    # ... (代码未变)
     try:
         model_choice = request.form.get('model')
         prompt = request.form.get('prompt')
@@ -150,8 +149,6 @@ def generate_image_proxy():
         print(f"服务器内部错误: {e}")
         return jsonify({"error": f"服务器内部错误: {str(e)}"}), 500
 
-# --- 主程序入口 ---
-if __name__ == '__main__':
-    # 在本地开发时，Flask会自动处理静态文件，方便调试
-    app.run(debug=True, port=5001)
-
+# Vercel不需要下面的主程序入口
+# if __name__ == '__main__':
+#     app.run(debug=True, port=5001)
