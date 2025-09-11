@@ -1,0 +1,8 @@
+Flask
+python-dotenv
+requests
+Pillow
+google-generativeai
+Flask-Cors
+gunicorn
+waitress
