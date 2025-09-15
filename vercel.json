@@ -6,7 +6,7 @@
       "use": "@vercel/python"
     },
     {
-      "src": "static/index.html",
+      "src": "static/index_play.html",
       "use": "@vercel/static"
     }
   ],
@@ -17,7 +17,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "static/index.html"
+      "dest": "static/index_play.html"
     }
   ]
 }
