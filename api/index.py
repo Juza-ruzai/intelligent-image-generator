@@ -21,7 +21,7 @@ CORS(app)
 # --- 根路由，用于服务前端HTML文件 ---
 @app.route('/')
 def serve_index():
-    return send_from_directory(app.static_folder, 'index.html')
+    return send_from_directory(app.static_folder, 'index_play.html')
 
 # --- 模型处理函数 ---
 def _process_with_gemini(api_key, prompt, image_bytes):
